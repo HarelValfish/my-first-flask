@@ -1,6 +1,6 @@
 from flask import Flask
 from werkzeug.exceptions import NotFound, BadRequest, HTTPException
-from uuid_lab import tasks_bp
+from routes import tasks_bp
 from errors import errors_bp
 
 app = Flask(__name__)
