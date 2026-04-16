@@ -27,3 +27,17 @@ def create_task1(task_data):
     result = todos_coll.insert_one(new_task)
     new_task['_id'] = str(result.inserted_id)
     return new_task
+
+def update_task_db(task_id: str, update_data: dict):
+    try:
+        result = todos_coll.update_one(
+            {"_id": ObjectId(task_id)},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count > 0:
+            return get_task_by_id(task_id)
+        
+        return None
+    except Exception:
+        return None
