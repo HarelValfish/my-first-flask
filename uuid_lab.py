@@ -1,7 +1,7 @@
-import uuid
 from flask import Flask, jsonify, request, Blueprint
 from werkzeug.exceptions import NotFound, BadRequest, HTTPException
 from models import get_all_tasks, get_task_by_id, create_task
+from database import db
 
 app = Flask(__name__)
 
@@ -26,7 +26,7 @@ def create_task():
     
     new_task = create_task(data)
     
-    get_all_tasks.append(new_task)
+    db.todos.insert_one(new_task)
     return jsonify(new_task), 201
 
 @tasks_bp.route('/tasks/<task_id>', methods=["PUT"])
