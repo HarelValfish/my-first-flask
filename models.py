@@ -1,12 +1,12 @@
 from bson import ObjectId
 from database import todos_coll
-
+#!=======================get all task func=========================
 def get_all_tasks() -> list:
     all_todos = list(todos_coll.find({})) 
     for task in all_todos:
         task['_id'] = str(task['_id'])
     return all_todos
-
+#!====================get task by id func=========================
 def get_task_by_id(task_id: str) -> dict | None:
     try:
         task = todos_coll.find_one({"_id": ObjectId(task_id)})
@@ -18,7 +18,7 @@ def get_task_by_id(task_id: str) -> dict | None:
         return None
     except Exception:
         return None
-
+#!======================create task=========================
 def create_task1(task_data):
     new_task = {
         "title": task_data['title'],
@@ -27,7 +27,7 @@ def create_task1(task_data):
     result = todos_coll.insert_one(new_task)
     new_task['_id'] = str(result.inserted_id)
     return new_task
-
+#!====================update task==========================
 def update_task_db(task_id: str, update_data: dict):
     try:
         result = todos_coll.update_one(
@@ -41,3 +41,4 @@ def update_task_db(task_id: str, update_data: dict):
         return None
     except Exception:
         return None
+#!======================delete task=========================

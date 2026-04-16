@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, request, Blueprint
-from werkzeug.exceptions import NotFound, BadRequest, HTTPException
+from werkzeug.exceptions import NotFound, BadRequest
 from models import get_all_tasks, get_task_by_id, create_task1, update_task_db
-from database import db
 
 app = Flask(__name__)
 
