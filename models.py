@@ -1,5 +1,5 @@
-import uuid
-from database import todos_coll, db
+from bson import ObjectId
+from database import todos_coll
 
 def get_all_tasks() -> list:
     all_todos = list(todos_coll.find({})) 
@@ -7,11 +7,17 @@ def get_all_tasks() -> list:
         task['_id'] = str(task['_id'])
     return all_todos
 
-def get_task_by_id(task_id):
-    for task in tasks:
-        if task['id'] == task_id:
+def get_task_by_id(task_id: str) -> dict | None:
+    try:
+        task = todos_coll.find_one({"_id": ObjectId(task_id)})
+        
+        if task:
+            task['_id'] = str(task['_id'])
             return task
-    return None
+            
+        return None
+    except Exception:
+        return None
 
 def create_task1(task_data):
     new_task = {
