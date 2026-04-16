@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, Blueprint
 from werkzeug.exceptions import NotFound, BadRequest, HTTPException
-from models import get_all_tasks, get_task_by_id, create_task
+from models import get_all_tasks, get_task_by_id, create_task1
 from database import db
 
 app = Flask(__name__)
@@ -9,7 +9,7 @@ tasks_bp = Blueprint('tasks', __name__)
 
 @tasks_bp.route('/tasks', methods=['GET'])
 def get_tasks():
-    return jsonify(get_all_tasks)
+    return jsonify(get_all_tasks())
 
 @tasks_bp.route('/tasks/<task_id>', methods=["GET"])
 def get_task(task_id):
@@ -20,13 +20,11 @@ def get_task(task_id):
 
 @tasks_bp.route('/tasks', methods=["POST"])
 def create_task():
-    data = request.get_json()
+    data = request.json
     if not data or 'title' not in data:
         raise BadRequest("Field 'title' is required")
     
-    new_task = create_task(data)
-    
-    db.todos.insert_one(new_task)
+    new_task = create_task1(data)
     return jsonify(new_task), 201
 
 @tasks_bp.route('/tasks/<task_id>', methods=["PUT"])
