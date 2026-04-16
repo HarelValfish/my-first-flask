@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, Blueprint
 from werkzeug.exceptions import NotFound, BadRequest
-from models import get_all_tasks, get_task_by_id, create_task1, update_task_db
+from models import get_all_tasks, get_task_by_id, create_task1, update_task_db, delete_task_db
 
 app = Flask(__name__)
 
@@ -54,11 +54,10 @@ def update_task(task_id):
 #!=====================DELETE TASK BY ID=========================
 
 @tasks_bp.route('/tasks/<task_id>', methods=["DELETE"])
-def delete_task(task_id):
-    for task in get_all_tasks:
-        if task['id'] == task_id:
-            get_all_tasks.remove(task)
-            return jsonify({"message": "Task deleted"})
+def handle_delete_task(task_id):
+    success = delete_task_db(task_id)
+    if success:
+        return jsonify({"Message": "task deleted successfully"}), 200
         
     raise NotFound(f"Task with id '{task_id}' not found")
 

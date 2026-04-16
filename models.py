@@ -42,3 +42,10 @@ def update_task_db(task_id: str, update_data: dict):
     except Exception:
         return None
 #!======================delete task=========================
+
+def delete_task_db(task_id: str):
+    try:
+        result = todos_coll.delete_one({"_id": ObjectId(task_id)})
+        return result.deleted_count > 0
+    except Exception:
+        return False
