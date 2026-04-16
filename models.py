@@ -1,17 +1,9 @@
 import uuid
 from database import todos_coll, db
 
-# tasks = [
-#     {"id": 1, "title": "Buy groceries", "completed": False},
-#     {"id": 2, "title": "Do homework", "completed": True},
-#     {"id": 3, "title": "Call mom", "completed": False}
-# ]
-
 def get_all_tasks() -> list:
-    # Use the collection object consistently
     all_todos = list(todos_coll.find({})) 
     for task in all_todos:
-        # Convert ObjectId to string so Flask can jsonify it
         task['_id'] = str(task['_id'])
     return all_todos
 
