@@ -12,5 +12,5 @@ def handle_http_exception(e):
     }), e.code
 
 @errors_bp.errorhandler(Exception)
-def handle_generic_exception(e):
+def handle_generic_exception():
     return jsonify({"error": "An unexpected error occurred"}), 500
