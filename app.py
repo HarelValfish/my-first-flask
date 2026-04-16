@@ -1,5 +1,4 @@
 from flask import Flask
-from werkzeug.exceptions import NotFound, BadRequest, HTTPException
 from routes import tasks_bp
 from errors import errors_bp
 
