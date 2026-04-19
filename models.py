@@ -1,7 +1,7 @@
 from bson import ObjectId
 from database import todos_coll
 #!=======================get all task func=========================
-def get_all_tasks() -> list:
+def get_all_tasks() :
     all_todos = list(todos_coll.find({})) 
     for task in all_todos:
         task['_id'] = str(task['_id'])
