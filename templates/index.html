@@ -30,11 +30,12 @@
   <script>
     const API = "/tasks";
 
-    const taskList  = document.getElementById("task-list");
-    const emptyMsg  = document.getElementById("empty-msg");
-    const errorMsg  = document.getElementById("error-msg");
-    const addForm   = document.getElementById("add-form");
-    const newTitle  = document.getElementById("new-title");
+    const taskList = document.getElementById("task-list");
+    const emptyMsg = document.getElementById("empty-msg");
+    const errorMsg = document.getElementById("error-msg");
+    const addForm = document.getElementById("add-form");
+    const newTitle = document.getElementById("new-title");
+    const openSubtaskPanels = new Set();
 
     function showError(msg) {
       errorMsg.textContent = msg;
@@ -50,24 +51,65 @@
       return data?.message || data?.error || data?.ERROR || fallback;
     }
 
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    function snapshotOpenPanels() {
+      openSubtaskPanels.clear();
+      document.querySelectorAll("#task-list .task-item[data-task-id]").forEach(item => {
+        const details = item.querySelector(".subtasks-box");
+        if (details && details.open) {
+          openSubtaskPanels.add(item.dataset.taskId);
+        }
+      });
+    }
+
     function renderTasks(tasks) {
       taskList.innerHTML = "";
       emptyMsg.classList.toggle("hidden", tasks.length > 0);
 
       tasks.forEach(task => {
         const taskId = getTaskId(task);
+        const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
         const li = document.createElement("li");
+        li.dataset.taskId = taskId;
         li.className = "task-item" + (task.completed ? " completed" : "");
 
         li.innerHTML = `
-          <label class="checkbox-label">
-            <input type="checkbox" class="toggle-cb" ${task.completed ? "checked" : ""}>
-            <span class="title-text">${escapeHtml(task.title)}</span>
-          </label>
-          <div class="actions">
-            <button class="btn-edit" type="button">✏️</button>
-            <button class="btn-delete" type="button">❌</button>
+          <div class="task-top">
+            <label class="checkbox-label">
+              <input type="checkbox" class="toggle-cb" ${task.completed ? "checked" : ""}>
+              <span class="title-text">${escapeHtml(task.title)}</span>
+            </label>
+            <div class="actions">
+              <button class="btn-edit" type="button">✏️</button>
+              <button class="btn-delete" type="button">❌</button>
+            </div>
           </div>
+          <details class="subtasks-box">
+            <summary>Subtasks (${subtasks.length})</summary>
+            <form class="subtask-form">
+              <input class="subtask-input" type="text" placeholder="Add a subtask" required>
+              <button type="submit">Add</button>
+            </form>
+            <ul class="subtask-list">
+              ${subtasks.map(subtask => `
+                <li class="subtask-item ${subtask.completed ? "completed" : ""}" data-subtask-id="${subtask.subtask_id}">
+                  <label class="checkbox-label">
+                    <input type="checkbox" class="subtask-toggle" ${subtask.completed ? "checked" : ""}>
+                    <span class="subtask-title">${escapeHtml(subtask.title)}</span>
+                  </label>
+                  <div class="subtask-actions">
+                    <button class="btn-edit-subtask" type="button">✏️</button>
+                    <button class="btn-delete-subtask" type="button">❌</button>
+                  </div>
+                </li>
+              `).join("")}
+            </ul>
+          </details>
         `;
 
         li.querySelector(".toggle-cb").addEventListener("change", () => {
@@ -83,19 +125,60 @@
           startEdit(li, task, taskId, editBtn);
         });
 
+        const details = li.querySelector(".subtasks-box");
+        if (openSubtaskPanels.has(taskId)) {
+          details.open = true;
+        }
+        details.addEventListener("toggle", () => {
+          if (details.open) {
+            openSubtaskPanels.add(taskId);
+          } else {
+            openSubtaskPanels.delete(taskId);
+          }
+        });
+
+        li.querySelector(".subtask-form").addEventListener("submit", async e => {
+          e.preventDefault();
+          const input = li.querySelector(".subtask-input");
+          const title = input.value.trim();
+          if (!title) return;
+          await createSubtask(taskId, title);
+          input.value = "";
+        });
+
+        li.querySelectorAll(".subtask-item").forEach(subtaskEl => {
+          const subtaskId = subtaskEl.dataset.subtaskId;
+          const titleEl = subtaskEl.querySelector(".subtask-title");
+          const toggle = subtaskEl.querySelector(".subtask-toggle");
+          const editSubtaskBtn = subtaskEl.querySelector(".btn-edit-subtask");
+          const deleteSubtaskBtn = subtaskEl.querySelector(".btn-delete-subtask");
+
+          toggle.addEventListener("change", () => {
+            updateSubtask(taskId, subtaskId, { completed: toggle.checked });
+          });
+
+          editSubtaskBtn.addEventListener("click", async () => {
+            const currentTitle = titleEl.textContent.trim();
+            const updatedTitle = prompt("Edit subtask title", currentTitle);
+            if (updatedTitle === null) return;
+            const trimmed = updatedTitle.trim();
+            if (!trimmed || trimmed === currentTitle) return;
+            await updateSubtask(taskId, subtaskId, { title: trimmed });
+          });
+
+          deleteSubtaskBtn.addEventListener("click", () => {
+            deleteSubtask(taskId, subtaskId);
+          });
+        });
+
         taskList.appendChild(li);
       });
     }
 
-    function escapeHtml(str) {
-      return str.replace(/[&<>"']/g, c => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-      }[c]));
-    }
-
     async function loadTasks() {
+      snapshotOpenPanels();
       try {
-        const res  = await fetch(API);
+        const res = await fetch(API);
         const data = await res.json();
         if (!res.ok) throw new Error(readErrorMessage(data, "Failed to load tasks"));
         renderTasks(data);
@@ -105,7 +188,7 @@
     }
 
     async function createTask(title) {
-      const res  = await fetch(API, {
+      const res = await fetch(API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title }),
@@ -117,7 +200,7 @@
 
     async function toggleTask(id, completed) {
       try {
-        const res  = await fetch(`${API}/${id}`, {
+        const res = await fetch(`${API}/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ completed }),
@@ -132,7 +215,7 @@
 
     async function deleteTask(id) {
       try {
-        const res  = await fetch(`${API}/${id}`, { method: "DELETE" });
+        const res = await fetch(`${API}/${id}`, { method: "DELETE" });
         const data = await res.json();
         if (!res.ok) throw new Error(readErrorMessage(data, "Failed to delete task"));
         loadTasks();
@@ -143,13 +226,56 @@
 
     async function saveEdit(id, newTitleValue) {
       try {
-        const res  = await fetch(`${API}/${id}`, {
+        const res = await fetch(`${API}/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: newTitleValue }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(readErrorMessage(data, "Failed to update task"));
+        loadTasks();
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+
+    async function createSubtask(taskId, title) {
+      try {
+        const res = await fetch(`${API}/${taskId}/subtasks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(readErrorMessage(data, "Failed to create subtask"));
+        loadTasks();
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+
+    async function updateSubtask(taskId, subtaskId, updates) {
+      try {
+        const res = await fetch(`${API}/${taskId}/subtasks/${subtaskId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(readErrorMessage(data, "Failed to update subtask"));
+        loadTasks();
+      } catch (e) {
+        showError(e.message);
+      }
+    }
+
+    async function deleteSubtask(taskId, subtaskId) {
+      try {
+        const res = await fetch(`${API}/${taskId}/subtasks/${subtaskId}`, {
+          method: "DELETE",
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(readErrorMessage(data, "Failed to delete subtask"));
         loadTasks();
       } catch (e) {
         showError(e.message);
@@ -185,7 +311,7 @@
         if (val && val !== task.title) {
           saveEdit(taskId, val);
         } else {
-          loadTasks(); // revert
+          loadTasks();
         }
       };
 

@@ -79,13 +79,20 @@ h1 {
 
 .task-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 10px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 12px 14px;
   transition: background 0.15s;
+}
+
+.task-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .task-item:hover {
@@ -136,6 +143,108 @@ h1 {
   gap: 6px;
   flex-shrink: 0;
   margin-left: 10px;
+}
+
+.subtasks-box {
+  width: 100%;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 8px;
+}
+
+.subtasks-box summary {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  list-style: none;
+}
+
+.subtasks-box summary::-webkit-details-marker {
+  display: none;
+}
+
+.subtasks-box summary::after {
+  content: "▾";
+  float: right;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.subtasks-box[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.subtask-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.subtask-input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.subtask-form button {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.subtask-list {
+  list-style: none;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.subtask-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.subtask-item.completed .subtask-title {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.subtask-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.subtask-actions button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.btn-edit-subtask {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.btn-delete-subtask {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
 .actions button {
