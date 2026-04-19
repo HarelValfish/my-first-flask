@@ -46,7 +46,7 @@ def update_task(task_id):
         updates['completed'] = data['completed']
     
     updated_task = update_task_db(task_id, updates)
-    if update_task:
+    if updated_task:
         return jsonify(updated_task)
         
     raise NotFound(f"Task with id '{task_id}' not found")

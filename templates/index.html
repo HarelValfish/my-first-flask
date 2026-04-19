@@ -42,34 +42,46 @@
       setTimeout(() => errorMsg.classList.add("hidden"), 4000);
     }
 
+    function getTaskId(task) {
+      return task._id || task.id;
+    }
+
+    function readErrorMessage(data, fallback) {
+      return data?.message || data?.error || data?.ERROR || fallback;
+    }
+
     function renderTasks(tasks) {
       taskList.innerHTML = "";
       emptyMsg.classList.toggle("hidden", tasks.length > 0);
 
       tasks.forEach(task => {
+        const taskId = getTaskId(task);
         const li = document.createElement("li");
         li.className = "task-item" + (task.completed ? " completed" : "");
-        li.dataset.id = task.id;
 
         li.innerHTML = `
           <label class="checkbox-label">
-            <input type="checkbox" class="toggle-cb" ${task.completed ? "checked" : ""} />
+            <input type="checkbox" class="toggle-cb" ${task.completed ? "checked" : ""}>
             <span class="title-text">${escapeHtml(task.title)}</span>
           </label>
           <div class="actions">
-            <button class="btn-edit" title="Edit">&#9998;</button>
-            <button class="btn-delete" title="Delete">&#10005;</button>
+            <button class="btn-edit" type="button">✏️</button>
+            <button class="btn-delete" type="button">❌</button>
           </div>
         `;
 
-        // Toggle completed
-        li.querySelector(".toggle-cb").addEventListener("change", () => toggleTask(task.id, !task.completed));
+        li.querySelector(".toggle-cb").addEventListener("change", () => {
+          toggleTask(taskId, !task.completed);
+        });
 
-        // Delete
-        li.querySelector(".btn-delete").addEventListener("click", () => deleteTask(task.id));
+        li.querySelector(".btn-delete").addEventListener("click", () => {
+          deleteTask(taskId);
+        });
 
-        // Edit
-        li.querySelector(".btn-edit").addEventListener("click", () => startEdit(li, task));
+        const editBtn = li.querySelector(".btn-edit");
+        editBtn.addEventListener("click", () => {
+          startEdit(li, task, taskId, editBtn);
+        });
 
         taskList.appendChild(li);
       });
@@ -85,7 +97,7 @@
       try {
         const res  = await fetch(API);
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to load tasks");
+        if (!res.ok) throw new Error(readErrorMessage(data, "Failed to load tasks"));
         renderTasks(data);
       } catch (e) {
         showError(e.message);
@@ -99,29 +111,37 @@
         body: JSON.stringify({ title }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create task");
-      return data.data;
+      if (!res.ok) throw new Error(readErrorMessage(data, "Failed to create task"));
+      return data;
     }
 
     async function toggleTask(id, completed) {
-      const res  = await fetch(`${API}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update task");
-      loadTasks();
+      try {
+        const res  = await fetch(`${API}/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ completed }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(readErrorMessage(data, "Failed to update task"));
+        loadTasks();
+      } catch (e) {
+        showError(e.message);
+      }
     }
 
     async function deleteTask(id) {
-      const res  = await fetch(`${API}/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to delete task");
-      loadTasks();
+      try {
+        const res  = await fetch(`${API}/${id}`, { method: "DELETE" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(readErrorMessage(data, "Failed to delete task"));
+        loadTasks();
+      } catch (e) {
+        showError(e.message);
+      }
     }
 
-    async function saveEdit(id, newTitleValue, li) {
+    async function saveEdit(id, newTitleValue) {
       try {
         const res  = await fetch(`${API}/${id}`, {
           method: "PUT",
@@ -129,37 +149,47 @@
           body: JSON.stringify({ title: newTitleValue }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to update task");
+        if (!res.ok) throw new Error(readErrorMessage(data, "Failed to update task"));
         loadTasks();
       } catch (e) {
         showError(e.message);
       }
     }
 
-    function startEdit(li, task) {
+    function startEdit(li, task, taskId, editBtn) {
+      if (li.dataset.editing === "true") {
+        return;
+      }
+
       const label = li.querySelector(".checkbox-label");
       const titleSpan = li.querySelector(".title-text");
-      const editBtn = li.querySelector(".btn-edit");
+      if (!label || !titleSpan || !editBtn) {
+        return;
+      }
 
       const input = document.createElement("input");
       input.type = "text";
       input.className = "edit-input";
       input.value = task.title;
 
+      li.dataset.editing = "true";
       label.replaceChild(input, titleSpan);
-      editBtn.textContent = "Save";
+
+      const saveBtn = editBtn.cloneNode(true);
+      saveBtn.textContent = "Save";
+      editBtn.replaceWith(saveBtn);
       input.focus();
 
       const finish = () => {
         const val = input.value.trim();
         if (val && val !== task.title) {
-          saveEdit(task.id, val, li);
+          saveEdit(taskId, val);
         } else {
           loadTasks(); // revert
         }
       };
 
-      editBtn.onclick = finish;
+      saveBtn.addEventListener("click", finish);
       input.addEventListener("keydown", e => {
         if (e.key === "Enter") finish();
         if (e.key === "Escape") loadTasks();
