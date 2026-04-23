@@ -4,20 +4,37 @@
   padding: 0;
 }
 
+:root {
+  --bg-main: #1d232c;
+  --bg-surface: #262f3a;
+  --bg-elevated: #313c49;
+  --bg-subtle: #2a3441;
+  --border: #455263;
+  --text-primary: #e8edf3;
+  --text-muted: #afbac8;
+  --accent: #5d87c7;
+  --accent-hover: #4f79b9;
+  --danger: #c96b6b;
+  --danger-bg: #4f2f33;
+  --success: #6da883;
+}
+
 body {
   font-family: "Segoe UI", system-ui, sans-serif;
-  background: #f0f2f5;
+  background: radial-gradient(circle at top, #2a3441 0%, var(--bg-main) 58%);
   min-height: 100vh;
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding: 48px 16px;
+  color: var(--text-primary);
 }
 
 .container {
-  background: #fff;
+  background: var(--bg-surface);
   border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 36px rgba(7, 10, 16, 0.35);
   width: 100%;
   max-width: 520px;
   padding: 36px 32px;
@@ -26,7 +43,7 @@ body {
 h1 {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--text-primary);
   margin-bottom: 28px;
   text-align: center;
   letter-spacing: -0.5px;
@@ -42,20 +59,22 @@ h1 {
 #add-form input[type="text"] {
   flex: 1;
   padding: 10px 14px;
-  border: 2px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 0.95rem;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background 0.2s;
+  color: var(--text-primary);
+  background: var(--bg-elevated);
 }
 
 #add-form input[type="text"]:focus {
-  border-color: #6366f1;
+  border-color: var(--accent);
 }
 
 #add-form button {
   padding: 10px 20px;
-  background: #6366f1;
+  background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -66,7 +85,7 @@ h1 {
 }
 
 #add-form button:hover {
-  background: #4f46e5;
+  background: var(--accent-hover);
 }
 
 /* Task list */
@@ -81,8 +100,8 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px 14px;
   transition: background 0.15s;
@@ -96,12 +115,12 @@ h1 {
 }
 
 .task-item:hover {
-  background: #f1f5f9;
+  background: #344253;
 }
 
 .task-item.completed .title-text {
   text-decoration: line-through;
-  color: #94a3b8;
+  color: #8f9daf;
 }
 
 /* Checkbox + title */
@@ -116,14 +135,14 @@ h1 {
 .toggle-cb {
   width: 18px;
   height: 18px;
-  accent-color: #6366f1;
+  accent-color: var(--accent);
   cursor: pointer;
   flex-shrink: 0;
 }
 
 .title-text {
   font-size: 0.95rem;
-  color: #1e293b;
+  color: var(--text-primary);
   word-break: break-word;
 }
 
@@ -131,10 +150,12 @@ h1 {
 .edit-input {
   flex: 1;
   padding: 4px 8px;
-  border: 2px solid #6366f1;
+  border: 2px solid var(--accent);
   border-radius: 6px;
   font-size: 0.95rem;
   outline: none;
+  background: #3b4655;
+  color: var(--text-primary);
 }
 
 /* Action buttons */
@@ -147,16 +168,16 @@ h1 {
 
 .subtasks-box {
   width: 100%;
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #ffffff;
+  background: #2d3744;
   padding: 8px;
 }
 
 .subtasks-box summary {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #334155;
+  color: #c6d1df;
   cursor: pointer;
   list-style: none;
 }
@@ -169,7 +190,7 @@ h1 {
   content: "▾";
   float: right;
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .subtasks-box[open] summary::after {
@@ -185,13 +206,15 @@ h1 {
 .subtask-input {
   flex: 1;
   padding: 8px 10px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 0.85rem;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
 }
 
 .subtask-form button {
-  background: #6366f1;
+  background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -212,15 +235,19 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: #364252;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 8px;
 }
 
 .subtask-item.completed .subtask-title {
   text-decoration: line-through;
-  color: #94a3b8;
+  color: #8f9daf;
+}
+
+.subtask-title {
+  color: var(--text-primary);
 }
 
 .subtask-actions {
@@ -238,13 +265,13 @@ h1 {
 }
 
 .btn-edit-subtask {
-  background: #e0e7ff;
-  color: #4f46e5;
+  background: #2f4761;
+  color: #b8d3f3;
 }
 
 .btn-delete-subtask {
-  background: #fee2e2;
-  color: #dc2626;
+  background: var(--danger-bg);
+  color: #f2b5b5;
 }
 
 .actions button {
@@ -261,21 +288,21 @@ h1 {
 }
 
 .btn-edit {
-  background: #e0e7ff;
-  color: #4f46e5;
+  background: #2f4761;
+  color: #b8d3f3;
 }
 
 .btn-edit:hover {
-  background: #c7d2fe;
+  background: #3a5b7d;
 }
 
 .btn-delete {
-  background: #fee2e2;
-  color: #dc2626;
+  background: var(--danger-bg);
+  color: #f2b5b5;
 }
 
 .btn-delete:hover {
-  background: #fecaca;
+  background: #64383d;
 }
 
 /* Messages */
@@ -283,15 +310,16 @@ h1 {
 
 .empty-msg {
   text-align: center;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 0.9rem;
   margin-top: 16px;
 }
 
 .error-msg {
   text-align: center;
-  color: #dc2626;
-  background: #fee2e2;
+  color: #f7caca;
+  background: #5c3035;
+  border: 1px solid #7b3d44;
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 0.9rem;
