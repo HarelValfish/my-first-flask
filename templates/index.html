@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- basic page setup: charset, responsive viewport, title, and stylesheet -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Todo App</title>
@@ -10,6 +11,7 @@
   <div class="container">
     <h1>Todo List</h1>
 
+    <!-- form for adding a new task -->
     <form id="add-form">
       <input
         type="text"
@@ -21,42 +23,53 @@
       <button type="submit">Add</button>
     </form>
 
+    <!-- task list gets populated dynamically by renderTasks() -->
     <ul id="task-list"></ul>
 
+    <!-- shown when there are no tasks, hidden otherwise -->
     <p id="empty-msg" class="empty-msg hidden">No tasks yet. Add one above!</p>
+    <!-- shown briefly when an api call fails -->
     <p id="error-msg" class="error-msg hidden"></p>
   </div>
 
   <script>
+    // base api path used by all fetch calls
     const API = "/tasks";
 
+    // grab all the dom elements we'll be touching throughout the script
     const taskList = document.getElementById("task-list");
     const emptyMsg = document.getElementById("empty-msg");
     const errorMsg = document.getElementById("error-msg");
     const addForm = document.getElementById("add-form");
     const newTitle = document.getElementById("new-title");
+    // tracks which subtask panels are open so we can restore them after re-rendering
     const openSubtaskPanels = new Set();
 
+    // shows an error banner for 4 seconds then hides it
     function showError(msg) {
       errorMsg.textContent = msg;
       errorMsg.classList.remove("hidden");
       setTimeout(() => errorMsg.classList.add("hidden"), 4000);
     }
 
+    // handles both _id (mongo) and id field names coming from the api
     function getTaskId(task) {
       return task._id || task.id;
     }
 
+    // pulls a human-readable message out of whatever shape the error response has
     function readErrorMessage(data, fallback) {
       return data?.message || data?.error || data?.ERROR || fallback;
     }
 
+    // escapes special html characters to prevent xss when rendering user text
     function escapeHtml(str) {
       return String(str).replace(/[&<>"']/g, c => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
       }[c]));
     }
 
+    // records which subtask panels are currently open before a re-render wipes the dom
     function snapshotOpenPanels() {
       openSubtaskPanels.clear();
       document.querySelectorAll("#task-list .task-item[data-task-id]").forEach(item => {
@@ -67,6 +80,7 @@
       });
     }
 
+    // builds and injects the full task list into the dom from an array of task objects
     function renderTasks(tasks) {
       taskList.innerHTML = "";
       emptyMsg.classList.toggle("hidden", tasks.length > 0);
@@ -78,6 +92,7 @@
         li.dataset.taskId = taskId;
         li.className = "task-item" + (task.completed ? " completed" : "");
 
+        // renders the task row with its checkbox, title, edit/delete buttons, and subtask panel
         li.innerHTML = `
           <div class="task-top">
             <label class="checkbox-label">
@@ -112,23 +127,28 @@
           </details>
         `;
 
+        // toggles the task's completed state when its checkbox is clicked
         li.querySelector(".toggle-cb").addEventListener("change", () => {
           toggleTask(taskId, !task.completed);
         });
 
+        // deletes the task when the ❌ button is clicked
         li.querySelector(".btn-delete").addEventListener("click", () => {
           deleteTask(taskId);
         });
 
+        // switches the task title into an inline edit input
         const editBtn = li.querySelector(".btn-edit");
         editBtn.addEventListener("click", () => {
           startEdit(li, task, taskId, editBtn);
         });
 
+        // restores the open state of this task's subtask panel after re-render
         const details = li.querySelector(".subtasks-box");
         if (openSubtaskPanels.has(taskId)) {
           details.open = true;
         }
+        // keeps the open panel set in sync as the user opens and closes subtask panels
         details.addEventListener("toggle", () => {
           if (details.open) {
             openSubtaskPanels.add(taskId);
@@ -137,6 +157,7 @@
           }
         });
 
+        // submits the subtask add form and clears the input on success
         li.querySelector(".subtask-form").addEventListener("submit", async e => {
           e.preventDefault();
           const input = li.querySelector(".subtask-input");
@@ -146,6 +167,7 @@
           input.value = "";
         });
 
+        // wires up toggle, edit, and delete handlers for each existing subtask
         li.querySelectorAll(".subtask-item").forEach(subtaskEl => {
           const subtaskId = subtaskEl.dataset.subtaskId;
           const titleEl = subtaskEl.querySelector(".subtask-title");
@@ -175,6 +197,7 @@
       });
     }
 
+    // fetches all tasks from the api and re-renders the list
     async function loadTasks() {
       snapshotOpenPanels();
       try {
@@ -187,6 +210,7 @@
       }
     }
 
+    // posts a new task to the api and returns the created document
     async function createTask(title) {
       const res = await fetch(API, {
         method: "POST",
@@ -198,6 +222,7 @@
       return data;
     }
 
+    // sends a put request to flip the completed field on a task
     async function toggleTask(id, completed) {
       try {
         const res = await fetch(`${API}/${id}`, {
@@ -213,6 +238,7 @@
       }
     }
 
+    // sends a delete request for a task and refreshes the list
     async function deleteTask(id) {
       try {
         const res = await fetch(`${API}/${id}`, { method: "DELETE" });
@@ -224,6 +250,7 @@
       }
     }
 
+    // puts an updated title to the api after the user finishes inline editing
     async function saveEdit(id, newTitleValue) {
       try {
         const res = await fetch(`${API}/${id}`, {
@@ -239,6 +266,7 @@
       }
     }
 
+    // posts a new subtask under the given task and refreshes the list
     async function createSubtask(taskId, title) {
       try {
         const res = await fetch(`${API}/${taskId}/subtasks`, {
@@ -254,6 +282,7 @@
       }
     }
 
+    // puts updated fields (title or completed) onto a specific subtask
     async function updateSubtask(taskId, subtaskId, updates) {
       try {
         const res = await fetch(`${API}/${taskId}/subtasks/${subtaskId}`, {
@@ -269,6 +298,7 @@
       }
     }
 
+    // deletes a subtask by id and refreshes the list
     async function deleteSubtask(taskId, subtaskId) {
       try {
         const res = await fetch(`${API}/${taskId}/subtasks/${subtaskId}`, {
@@ -282,6 +312,7 @@
       }
     }
 
+    // replaces the title span with a text input and the edit button with a save button
     function startEdit(li, task, taskId, editBtn) {
       if (li.dataset.editing === "true") {
         return;
@@ -301,11 +332,13 @@
       li.dataset.editing = "true";
       label.replaceChild(input, titleSpan);
 
+      // swap the edit button for a save button and focus the input
       const saveBtn = editBtn.cloneNode(true);
       saveBtn.textContent = "↵";
       editBtn.replaceWith(saveBtn);
       input.focus();
 
+      // saves if the value changed, otherwise just cancels back to normal view
       const finish = () => {
         const val = input.value.trim();
         if (val && val !== task.title) {
@@ -315,6 +348,7 @@
         }
       };
 
+      // save on button click, enter key, or cancel on escape
       saveBtn.addEventListener("click", finish);
       input.addEventListener("keydown", e => {
         if (e.key === "Enter") finish();
@@ -322,6 +356,7 @@
       });
     }
 
+    // handles the add-task form submission and clears the input on success
     addForm.addEventListener("submit", async e => {
       e.preventDefault();
       const title = newTitle.value.trim();
@@ -335,6 +370,7 @@
       }
     });
 
+    // kick off the initial load when the page first opens
     loadTasks();
   </script>
 </body>

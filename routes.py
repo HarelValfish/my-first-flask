@@ -13,9 +13,7 @@ from models import (
 
 tasks_bp = Blueprint('tasks', __name__)
 
-# ============================================================
 #  TASK ROUTES
-# ============================================================
 
 #! return all tasks
 @tasks_bp.route('/tasks', methods=['GET'])
@@ -75,10 +73,7 @@ def handle_delete_task(task_id):
 
     raise NotFound(f"Task with id '{task_id}' not found")
 
-
-# ============================================================
 #  SUBTASK ROUTES
-# ============================================================
 
 #! add a subtask to a task
 @tasks_bp.route('/tasks/<task_id>/subtasks', methods=["POST"])
