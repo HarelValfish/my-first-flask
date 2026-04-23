@@ -12,14 +12,18 @@ from models import (
 )
 
 tasks_bp = Blueprint('tasks', __name__)
-#!======================GET ALL TASKS=========================
 
+# ============================================================
+#  TASK ROUTES
+# ============================================================
+
+#! return all tasks
 @tasks_bp.route('/tasks', methods=['GET'])
 def get_tasks():
     return jsonify(get_all_tasks())
 
-#!====================GET SINGLE TASK BY ID==========================
 
+#! return a single task by ID
 @tasks_bp.route('/tasks/<task_id>', methods=["GET"])
 def get_task(task_id):
     task = get_task_by_id(task_id)
@@ -27,19 +31,19 @@ def get_task(task_id):
         return jsonify(task)
     raise NotFound(f"Task with id '{task_id}' not found")
 
-#!===================POST NEW TASK========================
 
+#! create a new task
 @tasks_bp.route('/tasks', methods=["POST"])
 def create_task():
     data = request.json
     if not data or 'title' not in data:
         raise BadRequest("Field 'title' is required")
-    
+
     new_task = create_task1(data)
     return jsonify(new_task), 201
 
-#!====================UPDATE TASK BY ID===========================
 
+#! update a task's title and/or completed flag
 @tasks_bp.route('/tasks/<task_id>', methods=["PUT"])
 def update_task(task_id):
     data = request.get_json()
@@ -54,24 +58,29 @@ def update_task(task_id):
 
     if not updates:
         raise BadRequest("No valid fields provided")
-    
+
     updated_task = update_task_db(task_id, updates)
     if updated_task:
         return jsonify(updated_task)
-        
+
     raise NotFound(f"Task with id '{task_id}' not found")
 
-#!=====================DELETE TASK BY ID=========================
 
+#! delete a task by ID
 @tasks_bp.route('/tasks/<task_id>', methods=["DELETE"])
 def handle_delete_task(task_id):
     success = delete_task_db(task_id)
     if success:
         return jsonify({"Message": "task deleted successfully"}), 200
-        
+
     raise NotFound(f"Task with id '{task_id}' not found")
 
 
+# ============================================================
+#  SUBTASK ROUTES
+# ============================================================
+
+#! add a subtask to a task
 @tasks_bp.route('/tasks/<task_id>/subtasks', methods=["POST"])
 def create_subtask(task_id):
     data = request.get_json()
@@ -89,6 +98,7 @@ def create_subtask(task_id):
     return jsonify(updated_task), 201
 
 
+#! update a subtask's title and/or completed flag
 @tasks_bp.route('/tasks/<task_id>/subtasks/<subtask_id>', methods=["PUT"])
 def update_subtask(task_id, subtask_id):
     data = request.get_json()
@@ -117,11 +127,10 @@ def update_subtask(task_id, subtask_id):
     return jsonify(updated_task)
 
 
+#! delete a subtask
 @tasks_bp.route('/tasks/<task_id>/subtasks/<subtask_id>', methods=["DELETE"])
 def delete_subtask(task_id, subtask_id):
     success = delete_subtask_db(task_id, subtask_id)
     if not success:
         raise NotFound(f"Subtask with id '{subtask_id}' not found for task '{task_id}'")
     return jsonify({"Message": "subtask deleted successfully"}), 200
-
-#!========================================================
