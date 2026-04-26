@@ -7,7 +7,7 @@ import certifi
 # loads .env so os.getenv picks up MONGO_URI and MONGO_DB
 load_dotenv()
 
-# module-level references kept here so init_db and get_collection share the same connection
+# ensures you don't open a new connection every time you want to talk to the database
 _client = None
 _db = None
 
@@ -26,7 +26,7 @@ def init_db(app):
     db_name = os.getenv("MONGO_DB", "prod")
     _client = _build_client(mongo_connection_string)
     _db = _client[db_name]
-    app.config["db"] = _db
+    app.config["db"] = _db # make it accessible throughout the entire app without having to re-initialize it
 
 # returns a collection by name, blowing up early if init_db was never called
 def get_collection(name):
